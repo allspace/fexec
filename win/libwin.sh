@@ -27,9 +27,10 @@ function fexec_init()
 	TARGET_PATH="$TARGET_VOLUME:\\$TARGET_FOLDER\\$TARGET_FILENAME"
 	TARGET_SHARE="//${SERVER_HOST}/${TARGET_VOLUME}\$";
 
-
-	CMD_SMB="smbclient ${TARGET_SHARE} -U ${USERNAME}"
-	CMD_NET="net rpc service"
+	export PATH=$PATH:`pwd`
+	
+	CMD_SMB="pwdfiller -c smbclient ${TARGET_SHARE} -U ${USERNAME}"
+	CMD_NET="pwdfiller -c net rpc service"
 }
 
 function start_agent()
@@ -43,7 +44,7 @@ function start_agent()
 		[ -z "$RC" ] && return 1;
 	fi
 	
-	$CMD_NET start ${TARGET_SVRNAME} -I ${SERVER_HOST} -U ${USERNAME} 2>/dev/null 2>&1 0<<<"${PASSWORD}"
+	$CMD_NET start ${TARGET_SVRNAME} -I ${SERVER_HOST} -U ${USERNAME} >/dev/null 2>&1 0<<<"${PASSWORD}"
 	[ "$?" != "0" ] && return 2;
 	
 	return 0;
@@ -53,10 +54,10 @@ function stop_agent()
 {
 	local SERVER_HOST=$1;
 	
-	$CMD_NET stop "${TARGET_SVRNAME}" -I ${SERVER_HOST} -U ${USERNAME} 2>/dev/null 0<<<"${PASSWORD}"
+	$CMD_NET stop "${TARGET_SVRNAME}" -I ${SERVER_HOST} -U ${USERNAME} >/dev/null 2>&1 0<<<"${PASSWORD}"
 	[ "$?" != "0" ] && return 1;
 	
-	$CMD_NET delete "${TARGET_SVRNAME}" -I ${SERVER_HOST} -U ${USERNAME} 2>/dev/null 0<<<"${PASSWORD}"
+	$CMD_NET delete "${TARGET_SVRNAME}" -I ${SERVER_HOST} -U ${USERNAME} >/dev/null 2>&1 0<<<"${PASSWORD}"
 	[ "$?" != "0" ] && return 2;
 	
 	return 0;
@@ -103,7 +104,7 @@ function exec_script()
 {
 	local SCRIPT=$1;
 	local UUID=`cat /proc/sys/kernel/random/uuid`;
-	local CMD_PUT="put ${FEXEC_TEMP}/fexec_$UUID.bat ${TARGET_FOLDER}\\_fexec_$UUID.bat; rename ${TARGET_FOLDER}\\_fexec_$UUID.bat ${TARGET_FOLDER}\\fexec_$UUID.bat;";
+	local CMD_PUT="put ${FEXEC_TEMP}/fexec_$UUID.bat ${TARGET_FOLDER}\\fexec_$UUID.bat_; rename ${TARGET_FOLDER}\\fexec_$UUID.bat_ ${TARGET_FOLDER}\\fexec_$UUID.bat;";
 	local CMD_GET="get ${TARGET_FOLDER}\\fexec_$UUID.out \"${FEXEC_TEMP}/fexec_$UUID.out\"; rm ${TARGET_FOLDER}\\fexec_$UUID.out;";
 	
 	echo "$SCRIPT" > "${FEXEC_TEMP}/fexec_$UUID.bat"
@@ -130,9 +131,10 @@ function exec_script()
 #main entry
 HOST=$1
 USERNAME=$2
-SCRIPT=$3
+PASSWORD=$3
+SCRIPT=$4
 
-fexec_init "$HOST" "$USERNAME"
+fexec_init "$HOST" "$USERNAME" "$PASSWORD"
 
 
 	(

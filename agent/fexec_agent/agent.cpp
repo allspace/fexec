@@ -97,6 +97,7 @@ int fexec_proc(TCHAR *rootPath, const TCHAR *file)
 	int rc = 0;
 	TCHAR fileName[1024];
 	TCHAR cmd[1024];
+	TCHAR tmp[1024];
 	TCHAR out[1024];
 	
 	_tcsncpy_s(fileName, _countof(fileName), file, _TRUNCATE);
@@ -106,7 +107,8 @@ int fexec_proc(TCHAR *rootPath, const TCHAR *file)
 		if(fileName[i]==_T('.')) {fileName[i]=_T('\0'); break;}
 	}
 	
-	_stprintf_s(cmd, _countof(cmd),_TEXT("%s\\%s.bat > %s\\%s.out 2>&1"), rootPath, fileName, rootPath, fileName);
+	_stprintf_s(cmd, _countof(cmd),_TEXT("%s\\%s.bat > %s\\%s.out_ 2>&1"), rootPath, fileName, rootPath, fileName);
+	_stprintf_s(tmp, _countof(out),_TEXT("%s\\%s.out_"), rootPath, fileName);
 	_stprintf_s(out, _countof(out),_TEXT("%s\\%s.out"), rootPath, fileName);
 	
 	WriteToLog(cmd);
@@ -122,6 +124,7 @@ int fexec_proc(TCHAR *rootPath, const TCHAR *file)
 			fclose(fp);
 		}
 	}
+	MoveFileEx(tmp, out, MOVEFILE_WRITE_THROUGH|MOVEFILE_REPLACE_EXISTING);
 	DeleteFile(file);
 	return 0;
 }
